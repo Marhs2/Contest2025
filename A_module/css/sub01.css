@@ -1,0 +1,24 @@
+.introduce {
+  margin: 50px auto;
+  width: 1400px;
+  border: 1px solid black;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  & img {
+    width: 600px;
+    height: 700px;
+  }
+}
+
+.intro-content {
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 5px;
+}
+
+.intro-content > div {
+  border-bottom: 1px solid black;
+}

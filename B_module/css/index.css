@@ -1,0 +1,404 @@
+.slide-container {
+  overflow: hidden;
+  width: 100%;
+  height: 800px;
+  &:hover .slides {
+    animation-play-state: paused;
+  }
+}
+
+.slide-container .img-cover,
+.slide-container img {
+  width: 100vw;
+  height: 800px;
+}
+
+.slides {
+  animation: infinite slide 10s;
+  display: flex;
+  & > div {
+    position: relative;
+  }
+}
+
+.slide-content {
+  position: absolute;
+  bottom: 15%;
+  left: 10%;
+  font-size: 40px;
+  font-weight: bold;
+
+  & .slide-title {
+    margin-bottom: 10px;
+    font-size: 55px;
+    color: white;
+    & span {
+      color: #ffc500;
+    }
+  }
+
+  & .slide-sub {
+    color: white;
+  }
+}
+
+.slide-container img {
+  opacity: 0.8;
+}
+
+.slide-container .img-cover {
+  background-color: #333;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(0);
+  }
+  33.3333% {
+    transform: translateX(-100vw);
+  }
+  63.3333% {
+    transform: translateX(-100vw);
+  }
+  66.3333% {
+    transform: translateX(-200vw);
+  }
+  96.3333% {
+    transform: translateX(-200vw);
+  }
+  100% {
+    transform: translateX(-300vw);
+  }
+}
+
+/* 슬라이드 */
+
+.title {
+  font-size: 50px;
+  font-weight: bold;
+  margin: 30px;
+  display: flex;
+  align-items: center;
+  &::before {
+    content: "";
+    display: block;
+    margin-right: 20px;
+    width: 20px;
+    height: 70px;
+    background-color: #ffc500;
+  }
+}
+
+main > div {
+  margin: 50px auto;
+  width: 1400px;
+}
+
+.product-container .item {
+  margin: 10px auto;
+  width: 1000px;
+  border: 5px solid #ffc500;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  & img,
+  .img-cover {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  justify-content: space-around;
+  padding: 20px;
+  & .item-des {
+    width: 600px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: keep-all;
+    white-space: nowrap;
+  }
+}
+
+.item-title {
+  font-size: 30px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  &::before {
+    margin-right: 10px;
+    content: "";
+    display: block;
+    height: 60px;
+    width: 20px;
+    background-color: #ffc500;
+  }
+}
+
+.item-des {
+  margin-left: 50px;
+}
+.item-price {
+  margin-left: 50px;
+  font-size: 30px;
+}
+
+.filter {
+  display: flex;
+  gap: 10px;
+}
+
+.filter label {
+  width: 150px;
+  height: 50px;
+  background-color: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#heal:checked ~ .filter [for="heal"] {
+  background-color: #ffc500;
+}
+#digital:checked ~ .filter [for="digital"] {
+  background-color: #ffc500;
+}
+#fancy:checked ~ .filter [for="fancy"] {
+  background-color: #ffc500;
+}
+#smell:checked ~ .filter [for="smell"] {
+  background-color: #ffc500;
+}
+#hair:checked ~ .filter [for="hair"] {
+  background-color: #ffc500;
+}
+
+.product-container {
+  margin-top: 30px;
+}
+
+.product-container > div {
+  display: none;
+}
+
+#heal:checked ~ .product-container .건강식품 {
+  display: block;
+}
+#digital:checked ~ .product-container .디지털 {
+  display: block;
+}
+#fancy:checked ~ .product-container .팬시 {
+  display: block;
+}
+#smell:checked ~ .product-container .향수 {
+  display: block;
+}
+#hair:checked ~ .product-container .헤어케어 {
+  display: block;
+}
+
+input {
+  display: none;
+}
+
+/* 판매상품 */
+
+.notice {
+  margin: 0 auto;
+}
+
+.noticeMove {
+  display: flex;
+  width: 500px;
+  font-size: 40px;
+  justify-content: space-around;
+  font-weight: bold;
+  margin: 50px auto;
+}
+
+.notice-head {
+  display: flex;
+  & > p {
+    width: calc(1400px / 3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    background-color: #ffc500;
+    font-weight: bold;
+    font-size: 20px;
+  }
+}
+
+.notice-body > div {
+  display: flex;
+  & > p {
+    width: calc(1400px / 3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.27);
+  }
+}
+
+/* 공지사항 */
+
+.banner {
+  width: 600px;
+  height: 300px;
+  background-color: #ffc500;
+  border-radius: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  line-height: 70px;
+  font-weight: bold;
+  font-size: 25px;
+  margin: 0 auto;
+}
+
+.banner-container > div > div {
+  width: 350px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 20px;
+  background-color: #ffc500;
+}
+
+.banner-container {
+  display: flex;
+  justify-content: space-around;
+  & > div {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  & i {
+    font-size: 30px;
+    margin-right: 10px;
+  }
+}
+
+/* 배너 */
+.STEP {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+[class*="step-container"] {
+  width: 200px;
+  border: 5px solid #ffc500;
+  border-radius: 10px;
+  height: 250px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.step-title {
+  margin: 0 auto;
+
+  width: 150px;
+  height: 30px;
+  background-color: #ffc500;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  border-radius: 10px;
+}
+
+.step-content {
+  height: 130px;
+  text-align: justify;
+  padding: 10px;
+}
+.stage {
+  font-weight: bold;
+  background-color: #ffc500;
+  height: 30px;
+  display: flex;
+  width: 100px;
+  border-radius: 10px;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 스템 */
+
+.loading-container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  background-color: #333;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: loadingBg forwards 4s;
+}
+
+.loading {
+  width: 200px;
+  height: 200px;
+  border: 20px solid white;
+  border-right: 20px solid #ffc500;
+  border-radius: 50%;
+  z-index: 101;
+  animation: loading forwards 4s;
+}
+
+@keyframes loading {
+  0% {
+    opacity: 1;
+    z-index: 101;
+  }
+
+  100% {
+    transform: rotate(720deg);
+    opacity: 0;
+    z-index: -1;
+  }
+}
+
+@keyframes loadingBg {
+  0% {
+    opacity: 1;
+    z-index: 101;
+  }
+
+  80% {
+    opacity: 0.3;
+    z-index: 101;
+  }
+
+  100% {
+    opacity: 0;
+    z-index: -1;
+  }
+}

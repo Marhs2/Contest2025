@@ -1,0 +1,43 @@
+.product-container {
+  display: flex;
+  justify-content: start;
+  gap: 10px;
+  height: 600px;
+  border: 1px solid black;
+  padding: 10px;
+}
+
+.item {
+  margin: 0 !important;
+}
+
+.count {
+  text-align: center;
+  gap: 10px;
+  & > * {
+    margin: 5px;
+  }
+}
+
+.checkout {
+  display: flex;
+  justify-content: space-around;
+  background-color: #ffc500;
+  height: 100px;
+  align-items: center;
+}
+
+.checkoutBtn {
+  border: 5px solid #333;
+  padding: 20px;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.checkoutPrice {
+  font-weight: bold;
+  gap: 10px;
+  font-size: 20px;
+}
