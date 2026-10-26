@@ -1,14 +1,7 @@
 <?php
-require_once "../db.php";
+// 공지사항 삭제
 require_once "../lib.php";
+requireAdmin();
 
-
-
-$idx = $_GET["idx"];
-
-
-DB::exec("delete from notice WHERE idx = '$idx'");
-
-alert("삭제했습니다");
-
-echo "<script>location.href='../'</script>";
+DB::exec("DELETE FROM notice WHERE idx = ?", [(int)($_GET["idx"] ?? 0)]);
+alertMove("공지사항을 삭제했습니다.", "../noticeLists.php");

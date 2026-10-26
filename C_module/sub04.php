@@ -1,214 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$pageTitle = "장바구니";
+$pageId = "sub04";
+require_once "parts/head.php";
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-  <link rel="stylesheet" href="./css/main.css" />
-  <link rel="stylesheet" href="./css/sub02.css" />
-  <link rel="stylesheet" href="./css/sub04.css" />
+$user = currentUser();
+$rows = [];
+if ($user) {
+  $rows = DB::fetchAll(
+    "SELECT i.*, c.count FROM cart c JOIN item i ON i.idx = c.itemId WHERE c.userId = ? ORDER BY c.idx",
+    [$user["id"]]
+  );
+}
+$total = 0;
+foreach ($rows as $r) $total += salePrice($r) * $r->count;
+?>
 
-  <link
-    rel="stylesheet"
-    href="./asaset/fontawesome/css/font-awesome.min.css" />
-</head>
+<main class="main">
+  <section class="page-head">
+    <h1 class="page-title">장바구니</h1>
+  </section>
 
-<body>
-  <?php require_once "./parts/header.php" ?>
-
-  <!-- 헤더 -->
-
-  <main>
-    <div class="CART">
-      <div class="title">CART</div>
-      <div class="product-container">
-
-
-
-        <?php
-
-        $userId = $_SESSION["ss"]->id ?? false;
-        if ($userId != false) {
-
-          $items = DB::fetchAll("select i.* , c.count  from item i join cart c on i.idx = itemId and c.userId = '$userId'");
-
-
-
-
-          foreach ($items as $key => $value) {
-        ?>
-            <div class="item" data-id="<?= $value->idx ?>">
-              <div class="img-cover">
-                <img
-                  src="<?= $value->img ?>"
-                  alt="<?= $value->idx ?>"
-                  title="<?= $value->idx ?>" />
-              </div>
-
-              <div class="item-content">
-                <div class="item-title"><?= $value->title ?></div>
-                <div class="item-price">
-                  <?php if ($value->price != "0") { ?>
-                    <span class="price"> <?= $value->price ?></span>
-                    <span style="text-decoration: line-through; color: gray"><?= $value->dis ?></span>
-                  <?php } else { ?>
-                    <span class="price"> <?= $value->dis ?></span>
-                  <?php } ?>
-                </div>
-                <div class="count">
-                  <input type="number" value="<?= $value->count ?>" min="1" onchange="priceChange()" oninput="priceChange()" />
-                  <div>총: <span>65,000</span> 원</div>
-                </div>
+  <?php if (!$user) { ?>
+    <div class="empty-state">
+      <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+      <p>로그인하면 담아둔 상품을 볼 수 있어요.</p>
+      <button type="button" class="btn btn-primary" data-open="loginModal">로그인</button>
+    </div>
+  <?php } elseif (!$rows) { ?>
+    <div class="empty-state">
+      <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+      <p>장바구니가 비어 있습니다.</p>
+      <a href="./sub02.php" class="btn btn-primary">전체상품 보러가기</a>
+    </div>
+  <?php } else { ?>
+    <div class="cart-layout">
+      <div class="cart-list" role="table" aria-label="장바구니 상품">
+        <div class="cart-row cart-head" role="row">
+          <span role="columnheader">상품</span>
+          <span role="columnheader">수량</span>
+          <span role="columnheader">단가</span>
+          <span role="columnheader">구매금액</span>
+          <span role="columnheader"><span class="sr-only">삭제</span></span>
+        </div>
+        <?php foreach ($rows as $r) {
+          $unit = salePrice($r); ?>
+          <div class="cart-row" role="row" data-id="<?= (int)$r->idx ?>" data-price="<?= $unit ?>">
+            <div class="cart-product" role="cell">
+              <img src="<?= e($r->img) ?>" alt="<?= e($r->title) ?>" title="<?= e($r->title) ?>" />
+              <div>
+                <p class="cart-name"><?= e($r->title) ?></p>
+                <?php if ((int)$r->sale > 0) { ?><span class="badge-sale inline"><?= e(saleBadge($r)) ?></span><?php } ?>
               </div>
             </div>
-
-          <?php
-          }
-
-          ?>
-
+            <div class="stepper" role="cell">
+              <button type="button" data-step="-1" aria-label="수량 빼기"><i class="fa fa-minus"></i></button>
+              <input type="number" min="1" max="99" value="<?= (int)$r->count ?>" aria-label="<?= e($r->title) ?> 수량" />
+              <button type="button" data-step="1" aria-label="수량 더하기"><i class="fa fa-plus"></i></button>
+            </div>
+            <div class="cart-unit" role="cell">
+              <?= won($unit) ?>원
+              <?php if ((int)$r->sale > 0) { ?><del><?= won($r->price) ?>원</del><?php } ?>
+            </div>
+            <div class="cart-amount" role="cell"><b><?= won($unit * $r->count) ?></b>원</div>
+            <div role="cell">
+              <button type="button" class="icon-btn sm" data-remove aria-label="<?= e($r->title) ?> 삭제"><i class="fa fa-times"></i></button>
+            </div>
+          </div>
         <?php } ?>
-
       </div>
+
+      <aside class="summary">
+        <h2>결제 정보</h2>
+        <p class="summary-row"><span>상품 수</span><b id="cartQty"><?= array_sum(array_map(fn($r) => (int)$r->count, $rows)) ?>개</b></p>
+        <p class="summary-total"><span>전체 결제금액</span><strong><span id="cartTotal"><?= won($total) ?></span>원</strong></p>
+        <button type="button" class="btn btn-primary btn-block btn-lg" id="checkout">구매하기</button>
+      </aside>
     </div>
+  <?php } ?>
+</main>
 
-    <div class="checkout">
-      <div class="checkoutPrice">총:<span>65,000</span>원</div>
-      <div class="checkoutBtn">구매하기</div>
-    </div>
-  </main>
-
-  <footer>
-    <div class="howto">
-      고객센터 이용안내 - 온라인몰 고객센터 1580-8282 - 매장고객센터
-      1577-8254고객센터 운영시간 [평일 09:00 - 18:00]
-    </div>
-    <div class="time"></div>
-    <div class="support">
-      주말 및 공휴일은 1:1문의하기를 이용해주세요. 업무가 시작되면 바로
-      처리해드립니다.
-    </div>
-
-    <div class="footer-nav">
-      <a href="#"><img src="./images/logo.png" alt="footer-logo" title="footer-logo" /></a>
-      <div class="other">
-        <a href="#">개인정보처리방침</a> | <a href="#">이용약관.법적고지</a> |
-        <a href="#">청소년보호방침</a> | <a href="#">이메일무단수집거부</a> |
-        <a href="#">사이트맵</a> |
-        <a href="#">채용</a>
-      </div>
-      <div class="Sns">
-        <a href="#"><i class="fa fa-twitter"></i></a>
-        <a href="#"><i class="fa fa-youtube-play"></i></a>
-        <a href="#"><i class="fa fa-weixin"></i></a>
-        <a href="#"><i class="fa fa-linkedin-square"></i></a>
-        <a href="#"><i class="fa fa-facebook-square"></i></a>
-      </div>
-    </div>
-
-    <div class="who">
-      (주)GIFTS:Mall | 사업자등록번호 : 809-81-01157 | 대표이사 황기영 주소 :
-      서울특별시 용산구 한강대로 123, 40층 본사 대표전화 : 02-123-4567 |
-      GIFTS:Mall 가맹상담전화 : 02-123-4568
-    </div>
-    <div class="safe">
-      지방은행구매안전서비스 GIFTS:Mall은 현금 결제한 금액에 대해 지방은행과
-      채무지급보증 계약을체결하여 안전한 거래를 보장하고 있습니다 서비스
-      가입사실 확인 >
-    </div>
-    <div class="copy">
-      COPYRIGHTⓒ 2024 GIFTS:MALL KOREA INC. ALL RIGHTS RESERVED
-    </div>
-  </footer>
-  <script src="./js/lib.js"></script>
-  <script src="./js/sub04.js"></script>
-  <script>
-    let total = 0;
-    $$(".item-price .price").forEach((e) => {
-      const num = parseInt(e.textContent.replace(/[^0-9]/g, ""));
-      if (num == 1) {
-        e.textContent = (
-          parseInt(
-            e
-            .closest(".item-price")
-            .querySelector("span:nth-child(2)")
-            .textContent.replace(/[^0-9]/g, "")
-          ) - 10000
-        ).toLocaleString("en-us");
-
-
-        e.closest(".item").querySelector(".count span").textContent = (parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) - 10000).toLocaleString("en-us")
-
-        total += (parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) - 10000)
-
-
-      } else if (num == 2) {
-        e.textContent = (
-          parseInt(
-            e
-            .closest(".item-price")
-            .querySelector("span:nth-child(2)")
-            .textContent.replace(/[^0-9]/g, "")
-          ) * 0.9
-        ).toLocaleString("en-us");
-
-        e.closest(".item").querySelector(".count span").textContent = (parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) * 0.9).toLocaleString("en-us")
-        total += parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) * 0.9
-        console.log(total)
-
-
-      } else if (num == 3) {
-        e.textContent = (
-          parseInt(
-            e
-            .closest(".item-price")
-            .querySelector("span:nth-child(2)")
-            .textContent.replace(/[^0-9]/g, "")
-          ) * 0.7
-        ).toLocaleString("en-us");
-
-
-        e.closest(".item").querySelector(".count span").textContent = (parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) * 0.7).toLocaleString("en-us")
-
-        total += (parseInt(
-          e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-        ) * 0.7)
-      }
-    });
-
-
-    document.querySelector(".checkoutPrice span").textContent = total
-  </script>
-
+<?php require_once "parts/footer.php"; ?>
+<script src="./js/sub04.js"></script>
 </body>
 
 </html>

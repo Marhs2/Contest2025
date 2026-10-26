@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 196 44" role="img" aria-labelledby="t">
+  <title id="t">GIFTS:Mall</title>
+  <!-- 선물상자 -->
+  <rect x="2" y="14" width="30" height="27" rx="5" fill="#FFC21A"/>
+  <rect x="0" y="10" width="34" height="9" rx="3" fill="#FFB000"/>
+  <!-- 리본 -->
+  <rect x="14" y="10" width="6" height="31" fill="#E8392E"/>
+  <path d="M17 10c-3-7-12-8-12-3 0 3 6 4 12 3zM17 10c3-7 12-8 12-3 0 3-6 4-12 3z" fill="#E8392E"/>
+  <!-- 워드마크 -->
+  <text x="42" y="31" font-family="Pretendard Variable, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="22" font-weight="800" letter-spacing="-0.5" fill="#1B2030">GIFTS<tspan fill="#E8392E">:</tspan>Mall</text>
+</svg>

@@ -30,11 +30,12 @@ contrls.addEventListener("click", (e) => {
 
   }
   if (e.target.classList.contains("ctrl06")) {
-    video.playbackRate -= 0.1
+    // 0.1 단위 소수점 오차와 0배속 오류 방지
+    video.playbackRate = Math.max(0.1, Math.round((video.playbackRate - 0.1) * 10) / 10)
 
   }
   if (e.target.classList.contains("ctrl07")) {
-    video.playbackRate += 0.1
+    video.playbackRate = Math.min(4, Math.round((video.playbackRate + 0.1) * 10) / 10)
 
   }
   if (e.target.classList.contains("ctrl08")) {
@@ -228,9 +229,9 @@ function category(name, e) {
             <div class="item-content">
               <div class="item-title">${item2.title}</div>
               <div class="item-price">
-                <span class="price">${item2.price}</span>
+                <span class="price">${item2.dis}</span>
                 <span style="text-decoration: line-through; color: gray"
-                  >${item2.dis}</span
+                  >${item2.price}</span
                 >
               </div>
         

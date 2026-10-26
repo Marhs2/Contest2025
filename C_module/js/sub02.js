@@ -1,347 +1,241 @@
-const contrls = $(".contorls-container");
-const video = document.querySelector("video");
+// 전체상품 페이지: 광고 동영상 컨트롤, 비회원 주문(드래그&드롭)
 
-let isAuto = localStorage.getItem("auto") === "true";
+/* ---------- 동영상 컨트롤 ---------- */
+const video = $("#player video");
+const AUTO_KEY = "giftsmall-autoplay";
+let autoPlay = localStorage.getItem(AUTO_KEY) === "true";
 
-if (isAuto === true) {
-  video.muted = true;
-  video.play();
+// 배속은 0.1 단위로 소수점 오차 없이 계산 (0.1배 ~ 4배)
+function setRate(rate) {
+  video.playbackRate = Math.min(4, Math.max(0.1, Math.round(rate * 10) / 10));
 }
 
-contrls.addEventListener("click", (e) => {
-  if (e.target.classList.contains("ctrl01")) {
-    video.play();
-  }
-  if (e.target.classList.contains("ctrl02")) {
-    video.pause();
-  }
-  if (e.target.classList.contains("ctrl03")) {
+function updateStatus() {
+  $("#vRate").textContent = video.playbackRate.toFixed(1) + "x";
+  $("#vLoop").textContent = video.loop ? "반복 켜짐" : "반복 꺼짐";
+  $("#vAuto").textContent = autoPlay ? "자동재생 켜짐" : "자동재생 꺼짐";
+  $('[data-v="loop"]').setAttribute("aria-pressed", video.loop);
+  $('[data-v="auto"]').setAttribute("aria-pressed", autoPlay);
+  $("#player").classList.toggle("is-playing", !video.paused);
+}
+
+// 브라우저 정책상 소리가 있으면 자동재생이 막히므로 음소거 후 재생
+function safePlay() {
+  video.play().catch(() => {
+    video.muted = true;
+    video.play().catch(() => {});
+  });
+}
+
+const actions = {
+  play: () => safePlay(),
+  pause: () => video.pause(),
+  stop: () => {
     video.pause();
     video.currentTime = 0;
-  }
-  if (e.target.classList.contains("ctrl04")) {
-    video.currentTime -= 10;
-  }
-  if (e.target.classList.contains("ctrl05")) {
-    video.currentTime += 10;
-  }
-  if (e.target.classList.contains("ctrl06")) {
-    video.playbackRate -= 0.1;
-  }
-  if (e.target.classList.contains("ctrl07")) {
-    video.playbackRate += 0.1;
-  }
-  if (e.target.classList.contains("ctrl08")) {
-    video.playbackRate = 1;
-  }
-  if (e.target.classList.contains("ctrl09")) {
-    video.loop = !video.loop;
-  }
-  if (e.target.classList.contains("ctrl10")) {
-    if (isAuto === true) {
-      video.pause();
-      video.currentTime = 0;
-      isAuto = false;
-    } else {
-      video.play();
-      isAuto = true;
-    }
-    localStorage.setItem("auto", isAuto);
-  }
-  if (e.target.classList.contains("ctrl11")) {
-    if ($(".controls").style.display == "none") {
-      $(".controls").style.display = "block";
-    } else {
-      $(".controls").style.display = "none";
-    }
-  }
+  },
+  back: () => (video.currentTime = Math.max(0, video.currentTime - 10)),
+  forward: () => (video.currentTime = Math.min(video.duration || 0, video.currentTime + 10)),
+  slower: () => setRate(video.playbackRate - 0.1),
+  faster: () => setRate(video.playbackRate + 0.1),
+  normal: () => setRate(1),
+  loop: () => (video.loop = !video.loop),
+  auto: () => {
+    autoPlay = !autoPlay;
+    localStorage.setItem(AUTO_KEY, autoPlay);
+    if (autoPlay && video.paused) safePlay();
+  },
+  toggle: (btn) => {
+    const hidden = $("#player").classList.toggle("controls-hidden");
+    btn.setAttribute("aria-expanded", !hidden);
+    btn.querySelector("span").textContent = hidden ? "컨트롤러 보이기" : "컨트롤러 숨기기";
+  },
+};
+
+$("#player").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-v]");
+  if (!btn) return;
+  actions[btn.dataset.v](btn);
+  updateStatus();
 });
+["play", "pause", "ratechange", "ended"].forEach((ev) => video.addEventListener(ev, updateStatus));
 
-// 영상제어
+if (autoPlay) {
+  video.muted = true;
+  safePlay();
+}
+updateStatus();
 
-const userId = $(".userId");
-let cartItems = $$(".non-user-container .product-container .item");
-const modal = $(".non-user-bg");
-const drop = $(".drop");
-const openModal = $(".open");
-const closeModal = $(".close");
+/* ---------- 비회원 주문 ---------- */
+const guestModal = $("#guestModal");
+const display = $("#guestDisplay");
+const orderZone = $("#guestOrder");
+const orderList = $("#guestOrderList");
+const order = new Map(); // idx -> 수량
+let draggingFromOrder = null;
 
-closeModal.addEventListener("click", () => {
-  $("body").style.overflowY = "scroll";
-  modal.style.display = "none";
-});
-openModal.addEventListener("click", () => {
-  $("body").style.overflow = "hidden";
-  modal.style.display = "flex";
-});
-
-function gen() {
-  const IDS = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890".split("");
-  for (let i = 0; i < 6; i++) {
-    const random = Math.floor(Math.random() * IDS.length);
-    userId.textContent += IDS[random];
-  }
+// 영숫자 6자리 랜덤 ID
+function randomId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-gen();
+const itemOf = (idx) => GUEST_ITEMS.find((it) => it.idx === idx);
+const esc = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-function giveDrag() {
-  cartItems = $$(".non-user-container .product-container .item");
-
-  $$(".drop .item").forEach((e) => {
-    console.log(e.querySelector("img").alt);
-    if ($(`.cart .item:has(img[alt="${e.querySelector("img").alt}"])`)) {
-      $(
-        `.cart .item:has(img[alt="${e.querySelector("img").alt}"])`
-      ).style.opacity = 0.5;
-    }
-  });
-
-  cartItems.forEach((e) => {
-    e.setAttribute("draggable", true);
-
-    e.addEventListener("dragstart", (event) => {
-      const data = event.dataTransfer.setData("html", e.innerHTML);
-      const id = event.dataTransfer.setData("id", e.querySelector("img").alt);
-    });
-  });
+// 전시영역: 카테고리별 전체상품
+function renderDisplay() {
+  display.innerHTML = CATES.map(
+    (cate) => `
+    <div class="g-cate">
+      <h4>${esc(cate)}</h4>
+      <div class="g-items">
+        ${GUEST_ITEMS.filter((it) => it.cate === cate)
+          .map(
+            (it) => `
+          <div class="g-item" draggable="true" data-idx="${it.idx}">
+            <img src="${esc(it.img)}" alt="${esc(it.title)}" title="${esc(it.title)}" draggable="false" />
+            <p class="g-name">${esc(it.title)}</p>
+            <p class="g-price">${won(it.price)}원 ${it.badge ? `<del>${won(it.origin)}</del>` : ""}</p>
+          </div>`
+          )
+          .join("")}
+      </div>
+    </div>`
+  ).join("");
 }
 
-function dargAndDrop() {
-  drop.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
-
-  drop.addEventListener("drop", (e) => {
-    const data = e.dataTransfer.getData("html");
-    const id = e.dataTransfer.getData("id");
-    const newBox = document.createElement("div");
-    newBox.classList.add("item");
-    newBox.classList.add("cloned");
-
-    if (
-      $(`.non-user-container .product-container .item:has(img[alt="${id}"])`)
-    ) {
-      $(
-        `.non-user-container .product-container .item:has(img[alt="${id}"])`
-      ).style.opacity = 0.5;
-    }
-
-    newBox.innerHTML += data;
-    if (drop.querySelector(`img[alt="${id}"]`)) {
-      const inputValue = drop
-        .querySelector(`img[alt="${id}"]`)
-        .closest(".item")
-        .querySelector("input").value;
-      drop
-        .querySelector(`.item:has(img[alt="${id}"])`)
-        .querySelector("input").value = parseInt(inputValue) + 1;
-    } else {
-      try {
-        newBox.querySelector(".item-content").innerHTML += `
-                 <div class="count">
-                <input type="number" value="1" min="1" onInput="priceChange()" onChange="priceChange()" />
-                <div>총: <span class="total">65,000</span> 원</div>
-              </div>
-
-    `;
-        newBox.setAttribute("draggable", true);
-
-        newBox.addEventListener("dragstart", (event) => {
-          const dropId = event.dataTransfer.setData(
-            "dropId",
-            newBox.querySelector("img").alt
-          );
-          const classCheck = event.dataTransfer.setData(
-            "class",
-            newBox.classList
-          );
-        });
-
-        $("body").addEventListener("dragover", (event) => {
-          event.preventDefault();
-        });
-
-        $("body").addEventListener("drop", (event) => {
-          const id = event.dataTransfer.getData("dropId");
-          const classCheck = event.dataTransfer.getData("class");
-          if (event.target.classList.contains("drop")) return;
-          if (classCheck.includes("cloned")) {
-            if ($(`.drop .item:has(img[alt="${id}"])`)) {
-              $(`.drop .item:has(img[alt="${id}"])`).remove();
-            }
-
-            $(
-              `.non-user-container .product-container .item:has(img[alt="${id}"])`
-            ).style.opacity = 1;
-            priceChange();
-          }
-        });
-        drop.appendChild(newBox);
-      } catch (error) {}
-    }
-
-    priceChange();
-  });
-}
-
-function category(name, e) {
-  $$(".cate div").forEach((el) => {
-    el.classList.remove("active");
-  });
-
-  e.classList.add("active");
-
-  fetch("./data.json")
-    .then((res) => res.json())
-    .then((data) => {
-      const item = data[name];
-      let i = 0;
-
-      $(".non-user-container .product-container").innerHTML = "";
-
-      Object.keys(item).forEach((e2) => {
-        const item2 = item[e2];
-        if (item2.dis !== "0") {
-          $(".non-user-container .product-container").innerHTML += `
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/${name}/${parseInt(e2) + 1}.PNG"
-                alt="${name}${e2}Img"
-                title="${name}${e2}Img"
-              />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">${item2.title}</div>
-              <div class="item-price">
-                <span class="price">${item2.price}</span>
-                <span style="text-decoration: line-through; color: gray"
-                  >${item2.dis}</span
-                >
-              </div>
-        
-            </div>
-          </div>
-        `;
-        } else {
-          $(".non-user-container .product-container").innerHTML += `
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/${name}/${parseInt(e2) + 1}.PNG"
-                alt="${name}${e2}Img"
-                title="${name}${e2}Img"
-              />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">${item2.title}</div>
-              <div class="item-price">
-<span class="price">${item2.price}</span>              </div>
-      
-            </div>
-          </div>
-        `;
-        }
-
-        i++;
-      });
-
-      giveDrag();
-    });
-}
-
-function priceChange() {
-  cartItems = $$(".non-user-container .drop.product-container .item");
-  let total = 0;
-  cartItems.forEach((e) => {
-    const price = parseInt(
-      e.querySelector(".price").textContent.replace(/[^0-9]/g, "")
-    );
-    const inputValue = parseInt(e.querySelector("input").value);
-    let cost = 0;
-    if (inputValue == 0 || !e.querySelector("input").value.trim()) {
-      cost = 0;
-    } else {
-      cost = price * inputValue;
-    }
-
-    e.querySelector(".total").textContent = cost.toLocaleString("en-us");
-
-    total += cost;
-  });
-
-  $(".total span").textContent = total.toLocaleString("en-us");
-}
-
-category("건강식품", $(".active"));
-dargAndDrop();
-
-$(".checoutBtn").addEventListener("click", (e) => {
-  if ($(".total span").textContent === "0") {
-    alert("물건을 선택해주세요");
+// 주문영역 + 결제영역
+function renderOrder() {
+  if (order.size === 0) {
+    orderList.innerHTML = `<p class="g-empty">여기에 상품을 끌어다 놓으세요</p>`;
   } else {
-    $(".user-alert").style.display = "block";
-    $(".user-name").textContent = $(".userId").textContent.replace("ID:  ", "");
-    $(".cost").textContent = $(".total span").textContent;
-
-    $(".drop.product-container").innerHTML = "";
-    category("건강식품", $(".active"));
-    $("body").style.overflowY = "scroll";
-
-    setTimeout(() => {
-      $(".user-alert").style.display = "none";
-    }, 3000);
-
-    modal.style.display = "none";
+    orderList.innerHTML = [...order]
+      .map(([idx, qty]) => {
+        const it = itemOf(idx);
+        return `
+        <div class="g-line" draggable="true" data-idx="${idx}">
+          <img src="${esc(it.img)}" alt="${esc(it.title)}" title="${esc(it.title)}" draggable="false" />
+          <div class="g-line-info">
+            <p class="g-name">${esc(it.title)}</p>
+            <p class="muted">단가 ${won(it.price)}원</p>
+          </div>
+          <label class="g-qty"><span class="sr-only">수량</span>
+            <input type="number" min="1" max="99" value="${qty}" data-qty="${idx}" />
+          </label>
+          <p class="g-amount">${won(it.price * qty)}원</p>
+          <button type="button" class="icon-btn sm" data-remove="${idx}" aria-label="${esc(it.title)} 빼기"><i class="fa fa-times"></i></button>
+        </div>`;
+      })
+      .join("");
   }
+
+  // 주문영역에 옮겨진 상품은 전시영역에서 반투명 처리
+  $$(".g-item", display).forEach((el) => el.classList.toggle("is-picked", order.has(+el.dataset.idx)));
+
+  const total = [...order].reduce((sum, [idx, qty]) => sum + itemOf(idx).price * qty, 0);
+  $("#guestTotal").textContent = won(total);
+}
+
+// 전시영역 → 주문영역 끌기 시작
+display.addEventListener("dragstart", (e) => {
+  const el = e.target.closest(".g-item");
+  if (!el) return;
+  e.dataTransfer.setData("text/plain", "add:" + el.dataset.idx);
+  e.dataTransfer.effectAllowed = "copy";
 });
-category("건강식품", $(".active"));
 
-// 드래그앤드롭
-
-const buyBtns = $$(".get");
-
-buyBtns.forEach((e) => {
-  e.addEventListener("click", () => {
-    fetch(`./addCart.php?idx=${e.closest(".item").getAttribute("data-id")}`)
-      .then((res) => res.text())
-      .then((data) => {
-        alert(data);
-      });
-  });
+// 주문영역 → 밖으로 끌기 시작 (선택 취소용)
+orderList.addEventListener("dragstart", (e) => {
+  const el = e.target.closest(".g-line");
+  if (!el) return;
+  draggingFromOrder = +el.dataset.idx;
+  e.dataTransfer.setData("text/plain", "remove:" + el.dataset.idx);
+  e.dataTransfer.effectAllowed = "move";
+  el.classList.add("is-dragging");
+});
+orderList.addEventListener("dragend", () => {
+  draggingFromOrder = null;
+  $$(".g-line.is-dragging").forEach((el) => el.classList.remove("is-dragging"));
 });
 
-$$(".item-price .price").forEach((e) => {
-  const num = parseInt(e.textContent.replace(/[^0-9]/g, ""));
-  if (num == 1) {
-    e.textContent = e.textContent = (
-      parseInt(
-        e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-      ) - 10000
-    ).toLocaleString("en-us");
-  } else if (num == 2) {
-    e.textContent = (
-      parseInt(
-        e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-      ) * 0.9
-    ).toLocaleString("en-us");
-  } else if (num == 3) {
-    e.textContent = (
-      parseInt(
-        e
-          .closest(".item-price")
-          .querySelector("span:nth-child(2)")
-          .textContent.replace(/[^0-9]/g, "")
-      ) * 0.7
-    ).toLocaleString("en-us");
+orderZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  orderZone.classList.add("is-over");
+});
+orderZone.addEventListener("dragleave", (e) => {
+  if (!orderZone.contains(e.relatedTarget)) orderZone.classList.remove("is-over");
+});
+orderZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  orderZone.classList.remove("is-over");
+  const [act, id] = e.dataTransfer.getData("text/plain").split(":");
+  if (act !== "add") return;
+  const idx = +id;
+  order.set(idx, (order.get(idx) || 0) + 1);
+  renderOrder();
+});
+
+// 주문영역 밖 어디에 놓아도 선택 취소
+guestModal.addEventListener("dragover", (e) => {
+  if (draggingFromOrder !== null) e.preventDefault();
+});
+guestModal.addEventListener("drop", (e) => {
+  if (draggingFromOrder === null || orderZone.contains(e.target)) return;
+  e.preventDefault();
+  order.delete(draggingFromOrder);
+  draggingFromOrder = null;
+  renderOrder();
+});
+
+// 수량 변경 → 금액/결제금액 즉시 반영
+orderList.addEventListener("input", (e) => {
+  const input = e.target.closest("[data-qty]");
+  if (!input) return;
+  const idx = +input.dataset.qty;
+  const qty = Math.min(99, Math.max(1, parseInt(input.value, 10) || 1));
+  order.set(idx, qty);
+  const it = itemOf(idx);
+  input.closest(".g-line").querySelector(".g-amount").textContent = won(it.price * qty) + "원";
+  const total = [...order].reduce((sum, [i, q]) => sum + itemOf(i).price * q, 0);
+  $("#guestTotal").textContent = won(total);
+});
+orderList.addEventListener("change", (e) => {
+  if (e.target.matches("[data-qty]")) e.target.value = order.get(+e.target.dataset.qty);
+});
+orderList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-remove]");
+  if (!btn) return;
+  order.delete(+btn.dataset.remove);
+  renderOrder();
+});
+
+// 모달 열기
+$("#guestOpen").addEventListener("click", () => {
+  $("#guestId").textContent = randomId();
+  order.clear();
+  renderDisplay();
+  renderOrder();
+  guestModal.showModal();
+});
+
+// 주문하기 → 모달 닫고 3초간 결제 메시지
+let paidTimer = null;
+$("#guestSubmit").addEventListener("click", () => {
+  if (order.size === 0) {
+    toast("주문할 상품을 주문 목록으로 끌어다 놓아주세요.");
+    return;
   }
+  const id = $("#guestId").textContent;
+  const total = $("#guestTotal").textContent;
+  guestModal.close();
+  order.clear();
+
+  const banner = $(".paid-banner");
+  banner.textContent = `방금 비회원 ${id}님이 ${total}원을 결제하셨습니다!`;
+  banner.hidden = false;
+  clearTimeout(paidTimer);
+  paidTimer = setTimeout(() => (banner.hidden = true), 3000);
 });

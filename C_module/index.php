@@ -1,585 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$pageTitle = "홈";
+$pageId = "main";
+require_once "parts/head.php";
+require_once "parts/card.php";
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-  <link rel="stylesheet" href="./css/main.css" />
-  <link rel="stylesheet" href="./css/index.css" />
-  <link
-    rel="stylesheet"
-    href="./asaset/fontawesome/css/font-awesome.min.css" />
-</head>
+// 메인 판매상품: 카테고리별 3개 (인기상품 우선)
+$mainItems = itemsByCate();
 
-<body>
-  <div class="loading-container">
-    <div class="loading"></div>
+$slides = [
+  ["img" => "slide01.jpg", "title" => "Better Give & Take", "sub" => "옴니채널 플랫폼 GIFTS로<br />전 세계 고객에게 선물의 가치를 높입니다."],
+  ["img" => "slide02.jpg", "title" => "Life Style Platforms", "sub" => "고객과 가장 가까운 곳에서<br />고객에게 다양한 즐거움을 선물합니다."],
+  ["img" => "slide03.jpg", "title" => "Online PLAYGROUND", "sub" => "업계 최초 당일 배송 서비스인 '오늘드림'으로<br />고객 니즈 충족과 고객 경험을 혁신합니다."],
+];
+?>
+
+<!-- 로딩 애니메이션 (접속/새로고침 시 약 3.5초) -->
+<div class="loader" aria-hidden="true">
+  <div class="loader-box">
+    <span class="loader-lid"></span>
+    <span class="loader-body"></span>
+    <span class="loader-ribbon"></span>
   </div>
-  <?php require_once "./parts/header.php" ?>
-  <!-- 헤더 -->
-  <div class="slide-container">
-    <div class="slides">
-      <div class="slide01">
-        <div class="img-cover">
-          <img
-            src="./images/slide01.jpg"
-            alt="slide01Img"
-            title="slide01Img" />
+  <p class="loader-text">선물을 포장하고 있어요</p>
+</div>
+
+<!-- 비주얼 이미지 영역 -->
+<section class="hero" aria-roledescription="carousel" aria-label="GIFTS:Mall 소개">
+  <div class="hero-track">
+    <?php
+    // 마지막에 1번 슬라이드를 복제해 1→2→3→1 순서로 끊김 없이 반복
+    foreach ([...$slides, $slides[0]] as $i => $s) { ?>
+      <div class="hero-slide" <?= $i === 3 ? 'aria-hidden="true"' : "" ?>>
+        <div class="hero-copy">
+          <p class="hero-count"><?= ($i % 3) + 1 ?> / 3</p>
+          <h2 class="hero-title"><?= e($s["title"]) ?></h2>
+          <p class="hero-sub"><?= $s["sub"] ?></p>
+          <a href="./sub02.php" class="btn btn-ink">선물 고르러 가기</a>
         </div>
-        <div class="slide-content">
-          <div class="slide-title">
-            <span>B</span>etter <span>G</span>ive & <span>T</span>ake
-          </div>
-          <div class="slide-sub">
-            옴니채널 플랫폼 GIFTS로<br />
-            전 세계 고객에게 선물의 가치를 높입니다.
-          </div>
+        <div class="hero-img">
+          <img src="./images/<?= $s["img"] ?>" alt="<?= e($s["title"]) ?>" title="<?= e($s["title"]) ?>" />
         </div>
+        <button type="button" class="hero-arrow prev" aria-label="이전 슬라이드"><i class="fa fa-angle-left"></i></button>
+        <button type="button" class="hero-arrow next" aria-label="다음 슬라이드"><i class="fa fa-angle-right"></i></button>
       </div>
-      <div class="slide02">
-        <div class="img-cover">
-          <img
-            src="./images/slide02.jpg"
-            alt="slide02Img"
-            title="slide02Img" />
-        </div>
-        <div class="slide-content">
-          <div class="slide-title">
-            <span>L</span>ife <span>S</span>tyle <span>P</span>latforms
-          </div>
-          <div class="slide-sub">
-            고객과 가장 가까운 곳에서 <br />
-            고객에게 다양한 즐거움을 선물합니다.
-          </div>
-        </div>
-      </div>
-      <div class="slide03">
-        <div class="img-cover">
-          <img
-            src="./images/slide03.jpg"
-            alt="slide03Img"
-            title="slide03Img" />
-        </div>
-        <div class="slide-content">
-          <div class="slide-title">
-            <span>O</span>nline <span>PLAYGROUND</span>
-          </div>
-          <div class="slide-sub">
-            업계 최초 당일 배송 서비스인 '오늘드림'으로 <br />
-            고객 니즈 충족과 고객 경험을 혁신합니다.
-          </div>
-        </div>
-      </div>
-      <div class="slide04">
-        <div class="img-cover">
-          <img
-            src="./images/slide01.jpg"
-            alt="slide01Img"
-            title="slide01Img" />
-        </div>
-        <div class="slide-content">
-          <div class="slide-title">
-            <span>B</span>etter <span>G</span>ive & <span>T</span>ake
-          </div>
-          <div class="slide-sub">
-            옴니채널 플랫폼 GIFTS로<br />
-            전 세계 고객에게 선물의 가치를 높입니다.
-          </div>
-        </div>
-      </div>
-    </div>
+    <?php } ?>
   </div>
+</section>
 
-  <main>
-    <div class="sale-product">
-      <div class="title">SALE PRODUCT</div>
-      <input type="radio" name="filter" id="heal" checked />
-      <input type="radio" name="filter" id="digital" />
-      <input type="radio" name="filter" id="fancy" />
-      <input type="radio" name="filter" id="smell" />
-      <input type="radio" name="filter" id="hair" />
-
-      <div class="filter">
-        <label for="heal">건강식품</label>
-        <label for="digital">디지털</label>
-        <label for="fancy">팬시</label>
-        <label for="smell">향수</label>
-        <label for="hair">헤어케어</label>
+<main class="main">
+  <!-- 판매상품 섹션 -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">카테고리별 선물</h2>
+      <a href="./sub02.php" class="more">전체상품 보기</a>
+    </div>
+    <div class="chips" role="tablist" aria-label="상품 카테고리">
+      <?php foreach (CATES as $i => $cate) { ?>
+        <button type="button" class="chip<?= $i === 0 ? " active" : "" ?>" role="tab" aria-selected="<?= $i === 0 ? "true" : "false" ?>" data-tab="<?= e($cate) ?>"><?= e($cate) ?></button>
+      <?php } ?>
+    </div>
+    <?php foreach ($mainItems as $cate => $items) { ?>
+      <div class="grid grid-3 tab-panel" role="tabpanel" data-panel="<?= e($cate) ?>" <?= $cate === CATES[0] ? "" : "hidden" ?>>
+        <?php foreach (array_slice($items, 0, 3) as $item) productCard($item, "plain"); ?>
       </div>
+    <?php } ?>
+  </section>
 
-      <div class="product-container">
-        <div class="items 건강식품">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/건강식품/1.PNG"
-                alt="건강식품0Img"
-                title="건강식품0Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">이뮨 멀티비타민&amp;미네랄</div>
-              <div class="item-des">
-                국내 판매 1위 멀티비타민 이뮨 14일분에 이중제형 + 남/녀
-                맞춤설계 포뮬러를 적용한 신제품
-              </div>
-              <div class="item-price">65,000 <span style="text-decoration: line-through; color: gary;">75,000</span> </div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/건강식품/2.PNG"
-                alt="건강식품1Img"
-                title="건강식품1Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">센트룸</div>
-              <div class="item-des">
-                생기 넘치는 일상을 위한 센트룸 우먼 더블업. 비타민 B군 8종
-                함량 2배, 23가지 비타민과 미네랄, 한국인 여성 맞춤 영양 설계
-              </div>
-              <div class="item-price">27,000</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/건강식품/3.PNG"
-                alt="건강식품2Img"
-                title="건강식품2Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">닥터브라이언</div>
-              <div class="item-des">
-                달콤한 청포도맛 구미로 맛있게 비타민 C와 D를 충전하세요.
-                활기찬 하루와 튼튼한 뼈 건강을 맛있게 충전하는 부드러운 젤리
-                타입
-              </div>
-              <div class="item-price">2,000</div>
-            </div>
-          </div>
-        </div>
-        <div class="items 디지털">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/디지털/1.PNG"
-                alt="디지털0Img"
-                title="디지털0Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">PANTONE PD충전 보조배터리</div>
-              <div class="item-des">
-                230g의 가벼운 무게로 휴대성 극대화, 3way 빌트인 케이블 채용,
-                10,000mAh의 대용량 배터리팩 내장
-              </div>
-              <div class="item-price">24,400</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/디지털/2.PNG"
-                alt="디지털1Img"
-                title="디지털1Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">Bowie D05 무선 블루투스 5.3 헤드셋</div>
-              <div class="item-des">
-                현실같은 3D사운드 스테이지 제공, 70시간의 오디오 재생시간,
-                2시간으로 완전 충전
-              </div>
-              <div class="item-price">36,900</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/디지털/3.PNG"
-                alt="디지털2Img"
-                title="디지털2Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">독거미 F99 기계식 키보드</div>
-              <div class="item-des">
-                최고의 퍼포먼스를 경험하게 해주는 키보드, 안정적인 무선 전송,
-                저소음 디자인, 일체형 실리콘 패드 디자인으로 소음 최소화,
-                프리미엄 PCB기판 채용으로 안정적이고 편안한 타건감 제공
-              </div>
-              <div class="item-price">70,750</div>
-            </div>
-          </div>
-        </div>
-        <div class="items 팬시">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/팬시/1.PNG"
-                alt="팬시0Img"
-                title="팬시0Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">명품 자동 장우산</div>
-              <div class="item-des">
-                태풍에도 견디는 프리미엄 우드 장우산. 50개 이상 구매 시 손잡이
-                무료 각인 서비스 제공
-              </div>
-              <div class="item-price">31,600</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/팬시/2.PNG"
-                alt="팬시1Img"
-                title="팬시1Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">
-                14K 윙블링 원터치 링 귀걸이(주문제작)
-              </div>
-              <div class="item-des">
-                언제나 당신의 일상에 '편안한 멋' 평범한 순간마저 매력을
-                돋보이게 만들어 줄 14K Daily Collection. 본 상품은 주문
-                제작으로 배송은 약 7~10일 정도 소요됩니다(주말 및 공휴일
-                제외).
-              </div>
-              <div class="item-price">250,000</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/팬시/3.PNG"
-                alt="팬시2Img"
-                title="팬시2Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">14K 윙블링 메르시 목걸이(주문제작)</div>
-              <div class="item-des">
-                언제나 변함없고 고급스러운 전체 14K 골드로 제작되어 소장
-                가치뿐만 아니라 우아한 아름다움을 선사합니다. 본 상품은 주문
-                제작으로 배송은 약 7~10일 정도 소요됩니다(주말 및 공휴일
-                제외).
-              </div>
-              <div class="item-price">265,000</div>
-            </div>
-          </div>
-        </div>
-        <div class="items 향수">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/향수/1.PNG"
-                alt="향수0Img"
-                title="향수0Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">에스쁘아 솔리드 퍼퓸 4.2g</div>
-              <div class="item-des">
-                새벽 달빛 아래 달큰한 체리가 어지럽게 흩어진 자리, 새하얀
-                자스민이 코끝을 스치고 자유롭게 남는 풍부한 머스크 향의 고체
-                향수
-              </div>
-              <div class="item-price">26,000</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/향수/2.PNG"
-                alt="향수1Img"
-                title="향수1Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">호텔도슨 향수 오드퍼퓸 75ml</div>
-              <div class="item-des">
-                향긋하고 보드라운 마른 꽃과 나무 향 뒤로 낙엽이 타는 듯한
-                베티버 향이 퍼지는 스파이시 플로럴 향
-              </div>
-              <div class="item-price">153,000</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/향수/3.PNG"
-                alt="향수2Img"
-                title="향수2Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">랑방 레 플레르 EDT 90ml</div>
-              <div class="item-des">
-                에너지 넘치고 빛나는 머스키 프루티 플로럴 향으로 부드러움과
-                반짝임의 완벽한 균형이 매력입니다.
-              </div>
-              <div class="item-price">64,500</div>
-            </div>
-          </div>
-        </div>
-        <div class="items 헤어케어">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/헤어케어/1.PNG"
-                alt="헤어케어0Img"
-                title="헤어케어0Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">
-                어노브 딥 데미지 트리트먼트 EX 더블
-              </div>
-              <div class="item-des">
-                부드러움에 집착하다! 어노브 집착 헤어팩! 단백질 3,000% UP으로
-                완성하는 극손상모 솔루션
-              </div>
-              <div class="item-price">29,800</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/헤어케어/2.PNG"
-                alt="헤어케어1Img"
-                title="헤어케어1Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">
-                려 루트젠 여성맞춤 볼륨 탈모증상케어 샴퓨 353ml
-              </div>
-              <div class="item-des">
-                근거있는 여성탈모 전문가 려 루트젠이 만든 촘촘탄탄 밀도탄력을
-                채우는 3D볼륨 탈모 샴푸. 부드럽고 향 좋은 약산성 비건 샴푸
-              </div>
-              <div class="item-price">21,900</div>
-            </div>
-          </div>
-
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/헤어케어/3.PNG"
-                alt="헤어케어2Img"
-                title="헤어케어2Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">
-                라보에이치 두피쿨링&amp;노세범 샴푸 333ml
-              </div>
-              <div class="item-des">
-                청량하게 리프레쉬-쿨링샴푸, 오래도록 뽀송뽀송-노세범샴푸,
-                두피장벽강화 특허기술-탈모증상 완화 기능성 샴푸
-              </div>
-              <div class="item-price">19,800</div>
-            </div>
-          </div>
-        </div>
+  <!-- 공지사항 섹션 -->
+  <section class="section notice-section">
+    <div class="section-head">
+      <h2 class="section-title">공지사항</h2>
+      <div class="pager">
+        <button type="button" class="icon-btn" id="noticePrev" aria-label="이전 페이지"><i class="fa fa-angle-left"></i></button>
+        <span class="pager-info"><b id="noticePage">1</b> / <span id="noticePages">1</span> 페이지</span>
+        <button type="button" class="icon-btn" id="noticeNext" aria-label="다음 페이지"><i class="fa fa-angle-right"></i></button>
       </div>
     </div>
 
-    <div class="notice">
-      <div class="title">NOTICE</div>
-
-      <div class="noticeMove">
-        <div class="moveleft" onclick="Funmoveleft()">&lt;</div>
-        <div><span class="page">1</span>페이지</div>
-        <div class="moveright" onclick="FunmoveRight()">&gt;</div>
+    <div class="notice-tools">
+      <div class="seg" aria-label="유형">
+        <button type="button" class="active" data-type="all">전체</button>
+        <button type="button" data-type="일반">일반</button>
+        <button type="button" data-type="이벤트">이벤트</button>
       </div>
-
-      <div class="noticeFilter">
-        <div class="type">
-          <div onclick="nomal()">일반</div>
-          <div onclick="even()">이벤트</div>
-        </div>
-
-        <div class="order">
-          <div onclick="desc()">DESC</div>
-          <div onclick="asc()">ASC</div>
-        </div>
-      </div>
-
-      <div class="notice-table">
-
-        <div class="notice-head">
-          <p>유형</p>
-          <p>제목</p>
-          <p>날짜</p>
-        </div>
-        <div class="notice-body">
-
-          <div class="overfolow">
-
-          </div>
-
-
-        </div>
+      <div class="seg" aria-label="정렬">
+        <button type="button" class="active" data-order="desc">Desc 최신순</button>
+        <button type="button" data-order="asc">Asc 오래된순</button>
       </div>
     </div>
 
-    <div class="SUPPORT-ENTER">
-      <div class="title">SUPPORT/ENTER</div>
-      <div class="banner">
-        대한민국 No.1 <br />
-        GIFTS:Mall과 함께 할 WIN-WIN 파트너를 찾습니다. <br />
-        제휴사의 많은 지원을 기다립니다.
+    <div class="notice-table" role="table" aria-label="공지사항 목록">
+      <div class="notice-row notice-head" role="row">
+        <span role="columnheader">유형</span>
+        <span role="columnheader">제목</span>
+        <span role="columnheader">공지일자</span>
       </div>
-
-      <div class="title">BANNER</div>
-
-      <div class="banner-container">
-        <div class="banner-content01">
-          <div class="banner01">
-            <i class="fa fa-cart-plus"></i>상품입점/제휴문의
-          </div>
-          <div class="banner02"><i class="fa fa-search"></i>문의결과조회</div>
-        </div>
-
-        <div class="banner-content02">
-          <div class="banner01">
-            <i class="fa fa-pencil-square-o"></i>전자계약시스템
-          </div>
-          <div class="banner02"><i class="fa fa-male"></i>파트너시스템</div>
-        </div>
-      </div>
-
-      <div class="title">STEP</div>
-      <div class="STEP">
-        <div class="step-container01">
-          <div class="stage">1단계</div>
-          <div class="step-content">
-            미거래 업체는 임시회원 가입/로그인 후 상담신청을 하실 수 있습니다.
-          </div>
-          <div class="step-title">
-            <i class="fa fa-user-plus"></i>임시회원가입
-          </div>
-        </div>
-        <i class="fa fa-arrow-right"></i>
-        <div class="step-container02">
-          <div class="stage">2단계</div>
-          <div class="step-content">
-            GIFTS:Mall 입점/제휴를 위해서는 온라인 상담이 선행되어야 합니다.
-            상담 문의 후 사이트를 통해 결과를 안내해 드립니다.
-          </div>
-          <div class="step-title"><i class="fa fa-phone"></i>온라인상담</div>
-        </div>
-
-        <i class="fa fa-arrow-right"></i>
-        <div class="step-container03">
-          <div class="stage">3단계</div>
-          <div class="step-content">
-            온라인 상담이 긍정적일 경우, 담당MD/제휴담당자와 구체적인 상담을
-            진행하게 됩니다.
-          </div>
-          <div class="step-title">
-            <i class="fa fa-building"></i> 방문상담
-          </div>
-        </div>
-
-        <i class="fa fa-arrow-right"></i>
-        <div class="step-container04">
-          <div class="stage">4단계</div>
-          <div class="step-content">
-            공정한 평가를 위해 상품력, 기획력, 영업력, 판촉력 등의 항목을
-            기준으로 내부 품평회를 진행합니다.
-          </div>
-          <div class="step-title"><i class="fa fa-black-tie"></i>품평회</div>
-        </div>
-
-        <i class="fa fa-arrow-right"></i>
-        <div class="step-container05">
-          <div class="stage">5단계</div>
-          <div class="step-content">
-            입점확정 협력사의 경우 신뢰있는 거래를 위해 신용평가를 받고
-            있습니다.
-          </div>
-          <div class="step-title"><i class="fa fa-check"></i> 신용평가</div>
-        </div>
-
-        <i class="fa fa-arrow-right"></i>
-        <div class="step-container06">
-          <div class="stage">6단계</div>
-          <div class="step-content">
-            전자계약서(또는 수기계약서)를 통해 거래계약서와 관련서류를
-            작성하시면 입점절차가 완료됩니다.
-          </div>
-          <div class="step-title">
-            <i class="fa fa-chain (alias)"></i>계약체결
-          </div>
-        </div>
-      </div>
+      <div id="noticeBody"></div>
     </div>
-    <!-- 문의 -->
-  </main>
+  </section>
 
-  <footer>
-    <div class="howto">
-      고객센터 이용안내 - 온라인몰 고객센터 1580-8282 - 매장고객센터
-      1577-8254고객센터 운영시간 [평일 09:00 - 18:00]
-    </div>
-    <div class="time"></div>
-    <div class="support">
-      주말 및 공휴일은 1:1문의하기를 이용해주세요. 업무가 시작되면 바로
-      처리해드립니다.
+  <!-- 상품입점/제휴문의 섹션 -->
+  <section class="section partner">
+    <div class="partner-intro">
+      <p class="partner-kicker">대한민국 No.1</p>
+      <h2 class="partner-title">GIFTS:Mall과 함께 할<br />WIN-WIN 파트너를 찾습니다.</h2>
+      <p class="partner-sub">제휴사의 많은 지원을 기다립니다.</p>
     </div>
 
-    <div class="footer-nav">
-      <a href="#"><img src="./images/logo.png" alt="footer-logo" title="footer-logo" /></a>
-      <div class="other">
-        <a href="#">개인정보처리방침</a> | <a href="#">이용약관.법적고지</a> |
-        <a href="#">청소년보호방침</a> | <a href="#">이메일무단수집거부</a> |
-        <a href="#">사이트맵</a> |
-        <a href="#">채용</a>
-      </div>
-      <div class="Sns">
-        <a href="#"><i class="fa fa-twitter"></i></a>
-        <a href="#"><i class="fa fa-youtube-play"></i></a>
-        <a href="#"><i class="fa fa-weixin"></i></a>
-        <a href="#"><i class="fa fa-linkedin-square"></i></a>
-        <a href="#"><i class="fa fa-facebook-square"></i></a>
-      </div>
-    </div>
+    <ul class="banners">
+      <li><a href="#"><i class="fa fa-cart-plus" aria-hidden="true"></i><span>상품입점/제휴문의</span></a></li>
+      <li><a href="#"><i class="fa fa-search" aria-hidden="true"></i><span>문의결과조회</span></a></li>
+      <li><a href="#"><i class="fa fa-file-text-o" aria-hidden="true"></i><span>전자계약시스템</span></a></li>
+      <li><a href="#"><i class="fa fa-users" aria-hidden="true"></i><span>파트너시스템</span></a></li>
+    </ul>
 
-    <div class="who">
-      (주)GIFTS:Mall | 사업자등록번호 : 809-81-01157 | 대표이사 황기영 주소 :
-      서울특별시 용산구 한강대로 123, 40층 본사 대표전화 : 02-123-4567 |
-      GIFTS:Mall 가맹상담전화 : 02-123-4568
-    </div>
-    <div class="safe">
-      지방은행구매안전서비스 GIFTS:Mall은 현금 결제한 금액에 대해 지방은행과
-      채무지급보증 계약을체결하여 안전한 거래를 보장하고 있습니다 서비스
-      가입사실 확인 >
-    </div>
-    <div class="copy">
-      COPYRIGHTⓒ 2024 GIFTS:MALL KOREA INC. ALL RIGHTS RESERVED
-    </div>
-  </footer>
-  <script src="./js/lib.js"></script>
-  <script src="./js/index.js"></script>
+    <h3 class="steps-title">입점 절차 안내</h3>
+    <ol class="steps">
+      <li><i class="fa fa-user-plus"></i><b>임시회원가입</b><p>미거래 업체는 임시회원 가입/로그인 후 상담신청을 하실 수 있습니다.</p></li>
+      <li><i class="fa fa-comments-o"></i><b>온라인상담</b><p>GIFTS:Mall 입점/제휴를 위해서는 온라인 상담이 선행되어야 합니다. 상담 문의 후 사이트를 통해 결과를 안내해 드립니다.</p></li>
+      <li><i class="fa fa-building-o"></i><b>방문상담</b><p>온라인 상담이 긍정적일 경우, 담당MD/제휴담당자와 구체적인 상담을 진행하게 됩니다.</p></li>
+      <li><i class="fa fa-star-o"></i><b>품평회</b><p>공정한 평가를 위해 상품력, 기획력, 영업력, 판촉력 등의 항목을 기준으로 내부 품평회를 진행합니다.</p></li>
+      <li><i class="fa fa-shield"></i><b>신용평가</b><p>입점확정 협력사의 경우 신뢰있는 거래를 위해 신용평가를 받고 있습니다.</p></li>
+      <li><i class="fa fa-pencil-square-o"></i><b>계약체결</b><p>전자계약서(또는 수기계약서)를 통해 거래계약서와 관련서류를 작성하시면 입점절차가 완료됩니다.</p></li>
+    </ol>
+  </section>
+</main>
+
+<?php require_once "parts/footer.php"; ?>
+<script src="./js/index.js"></script>
 </body>
 
 </html>
