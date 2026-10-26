@@ -1,418 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$pageTitle = "전체상품";
+$pageId = "sub02";
+require_once "parts/head.php";
+require_once "parts/card.php";
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-  <link rel="stylesheet" href="./css/main.css" />
-  <link rel="stylesheet" href="./css/sub02.css" />
-  <link
-    rel="stylesheet"
-    href="./asaset/fontawesome/css/font-awesome.min.css" />
-</head>
+$all = itemsByCate();
 
-<body>
-  <?php require_once "./parts/header.php" ?>
-  <!-- 헤더 -->
+// 비회원 주문 모달에서 쓸 상품 데이터 (할인 적용가 포함)
+$guestData = [];
+foreach ($all as $cate => $items) {
+  foreach ($items as $it) {
+    $guestData[] = [
+      "idx" => (int)$it->idx,
+      "cate" => $cate,
+      "title" => $it->title,
+      "img" => $it->img,
+      "price" => salePrice($it),
+      "origin" => (int)$it->price,
+      "badge" => saleBadge($it),
+    ];
+  }
+}
+?>
 
-  <div class="video-container">
-    <video src="./asaset/AD.mp4"></video>
-    <div class="contorls-container">
-      <div class="controls">
-        <div class="ctrl01">재생</div>
-        <div class="ctrl02">일시정지</div>
-        <div class="ctrl03">정지</div>
-        <div class="ctrl04">되감기(10초씩)</div>
-        <div class="ctrl05">빨리감기(10초씩)</div>
-        <div class="ctrl06">감속하기(0.1배씩)</div>
-        <div class="ctrl07">배속하기(0.1배씩)</div>
-        <div class="ctrl08">배속 원래대로 돌리기</div>
-        <div class="ctrl09">반복 켜기/끄기</div>
-        <div class="ctrl10">자동재생 켜기/끄기</div>
-      </div>
-      <div class="ctrl11">컨트롤러 보이기/숨기기</div>
+<main class="main">
+  <!-- 광고 동영상 (컨트롤러는 영상 프레임 안에 위치) -->
+  <section class="player" id="player">
+    <video src="./asaset/AD.mp4" playsinline preload="metadata" title="GIFTS:Mall 광고 영상"></video>
+    <div class="player-status" aria-live="polite">
+      <span id="vRate">1.0x</span>
+      <span id="vLoop">반복 꺼짐</span>
+      <span id="vAuto">자동재생 꺼짐</span>
     </div>
+    <div class="player-bar">
+      <div class="player-controls" id="playerControls">
+        <button type="button" data-v="play" title="재생"><i class="fa fa-play"></i><span>재생</span></button>
+        <button type="button" data-v="pause" title="일시정지"><i class="fa fa-pause"></i><span>일시정지</span></button>
+        <button type="button" data-v="stop" title="정지"><i class="fa fa-stop"></i><span>정지</span></button>
+        <button type="button" data-v="back" title="10초 되감기"><i class="fa fa-backward"></i><span>10초 뒤로</span></button>
+        <button type="button" data-v="forward" title="10초 빨리감기"><i class="fa fa-forward"></i><span>10초 앞으로</span></button>
+        <button type="button" data-v="slower" title="0.1배 감속"><i class="fa fa-minus"></i><span>감속 0.1</span></button>
+        <button type="button" data-v="faster" title="0.1배 배속"><i class="fa fa-plus"></i><span>배속 0.1</span></button>
+        <button type="button" data-v="normal" title="배속 원래대로"><i class="fa fa-undo"></i><span>1배속</span></button>
+        <button type="button" data-v="loop" title="반복 켜기/끄기" aria-pressed="false"><i class="fa fa-repeat"></i><span>반복</span></button>
+        <button type="button" data-v="auto" title="자동재생 켜기/끄기" aria-pressed="false"><i class="fa fa-magic"></i><span>자동재생</span></button>
+      </div>
+      <button type="button" class="player-toggle" data-v="toggle" aria-controls="playerControls" aria-expanded="true" title="컨트롤러 보이기/숨기기">
+        <i class="fa fa-sliders"></i><span>컨트롤러 숨기기</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="page-head">
+    <h1 class="page-title">전체상품</h1>
+    <p class="page-lead">카테고리마다 인기상품을 맨 위에 모았어요.</p>
+  </section>
+
+  <?php foreach ($all as $cate => $items) { ?>
+    <section class="cate-block" id="cate-<?= e($cate) ?>">
+      <h2 class="cate-title"><?= e($cate) ?> <small><?= count($items) ?>개</small></h2>
+      <div class="grid grid-5">
+        <?php foreach ($items as $item) productCard($item, "shop"); ?>
+      </div>
+    </section>
+  <?php } ?>
+
+  <div class="guest-cta">
+    <p>회원가입 없이 바로 주문하고 싶으신가요?</p>
+    <button type="button" class="btn btn-primary btn-lg" id="guestOpen">비회원주문</button>
   </div>
+</main>
 
-  <!-- 비디오 -->
+<!-- 비회원 결제 완료 메시지 (3초) -->
+<div class="paid-banner" role="status" aria-live="polite" hidden></div>
 
-  <main>
-    <div class="sale-product">
-      <div class="title">ALL PRODUCT</div>
-      <div class="product-container">
+<!-- 비회원 주문 모달 -->
+<dialog class="modal guest-modal" id="guestModal" aria-labelledby="guestTitle">
+  <div class="guest">
+    <div class="modal-head">
+      <h2 id="guestTitle"><span class="tag tag-guest">비회원</span> 비회원 주문</h2>
+      <button type="button" class="icon-btn" data-close aria-label="닫기"><i class="fa fa-times"></i></button>
+    </div>
 
-        <div class="items 건강식품">
-          <?php
-          $heal = DB::fetchAll("select * from item where cate = '건강식품'order by price desc");
+    <!-- 회원정보영역 -->
+    <section class="g-area g-info">
+      <h3>회원정보</h3>
+      <p>비회원 ID <b id="guestId">------</b></p>
+      <p class="muted">상품을 끌어서 오른쪽 주문 목록에 놓으세요. 주문 목록 밖으로 끌어내면 선택이 취소됩니다.</p>
+    </section>
 
+    <!-- 전시영역 -->
+    <section class="g-area g-display">
+      <h3>상품 전시</h3>
+      <div class="g-display-list" id="guestDisplay"></div>
+    </section>
 
-          foreach ($heal as $key => $value) {
-          ?>
-            <?php if ($value->price != "0") { ?>
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->price ?>
-                    </span>
-                    <span style="text-decoration: line-through; color: gray"><?= $value->dis ?> </span>
-                  </div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } else { ?>
-
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->dis ?></span></div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } ?>
-
-
-          <?php
-
-          } ?>
-
-        </div>
-        <div class="items 디지털">
-          <?php
-          $heal = DB::fetchAll("select * from item where cate = '디지털' order by price desc");
-
-
-          foreach ($heal as $key => $value) {
-          ?>
-            <?php if ($value->price != "0") { ?>
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price">
-                      <?= $value->price ?> </span>
-                    <span style="text-decoration: line-through; color: gray"> <?= $value->dis ?></span>
-                  </div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } else { ?>
-
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->dis ?></span></div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } ?>
-
-
-          <?php
-
-          } ?>
-        </div>
-        <div class="items 팬시">
-          <?php
-          $heal = DB::fetchAll("select * from item where cate = '팬시'order by price desc");
-
-
-          foreach ($heal as $key => $value) {
-          ?>
-            <?php if ($value->price != "0") { ?>
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price">
-                      <?= $value->price ?></span>
-                    <span style="text-decoration: line-through; color: gray"> <?= $value->dis ?></span>
-                  </div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } else { ?>
-
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->dis ?></span></div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } ?>
-
-
-          <?php
-
-          } ?>
-        </div>
-        <div class="items 향수">
-          <?php
-          $heal = DB::fetchAll("select * from item where cate = '향수'order by price desc");
-
-
-          foreach ($heal as $key => $value) {
-          ?>
-            <?php if ($value->price != "0") { ?>
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price">
-                      <?= $value->price ?> </span>
-                    <span style="text-decoration: line-through; color: gray"> <?= $value->dis ?></span>
-                  </div>
-                  <div class="btns">
-                   <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } else { ?>
-
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->dis ?></span></div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } ?>
-
-
-          <?php
-
-          } ?>
-        </div>
-        <div class="items 헤어케어">
-          <?php
-          $heal = DB::fetchAll("select * from item where cate = '헤어케어'order by price desc");
-
-
-          foreach ($heal as $key => $value) {
-          ?>
-            <?php if ($value->price != "0") { ?>
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price">
-                      <?= $value->price ?> </span>
-                    <span style="text-decoration: line-through; color: gray"> <?= $value->dis ?></span>
-                  </div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } else { ?>
-
-              <div class="item" data-id="<?= $value->idx ?>">
-                <div class="img-cover">
-                  <img
-                    src="<?= $value->img ?>"
-                    alt="<?= $value->idx ?>"
-                    title="<?= $value->idx ?>" />
-                </div>
-
-                <div class="item-content">
-                  <div class="item-title"><?= $value->title ?></div>
-                  <div class="item-price"><span class="price"><?= $value->dis ?></span></div>
-                  <div class="btns">
-                    <a>구매하기</a>
-                    <a class="get">장바구니담기</a>
-                  </div>
-                </div>
-              </div>
-            <?php } ?>
-
-
-          <?php
-
-          } ?>
-        </div>
+    <!-- 주문영역 -->
+    <section class="g-area g-order" id="guestOrder">
+      <h3>주문 목록</h3>
+      <div class="g-order-list" id="guestOrderList">
+        <p class="g-empty">여기에 상품을 끌어다 놓으세요</p>
       </div>
-  </main>
-  <div class="user-alert">
-    방금 비회원 <span class="user-name"></span>님이
-    <span class="cost"></span>원을 결제하셨습니다!
+    </section>
+
+    <!-- 결제영역 -->
+    <section class="g-area g-pay">
+      <h3>결제</h3>
+      <p class="g-total">총 결제금액 <strong><span id="guestTotal">0</span>원</strong></p>
+      <button type="button" class="btn btn-primary btn-block" id="guestSubmit">주문하기</button>
+    </section>
   </div>
-  <div class="non-user-bg">
-    <div class="non-user-container">
-      <header>
-        <div class="userId">ID:</div>
-        <div class="title">비회원 주문</div>
-        <div class="close">닫기</div>
-      </header>
-      <main>
-        <div class="cate">
-          <div onclick="category('건강식품',this)" class="active">
-            건강식품
-          </div>
-          <div onclick="category('디지털',this)">디지털</div>
-          <div onclick="category('팬시',this)">팬시</div>
-          <div onclick="category('향수',this)">향수</div>
-          <div onclick="category('헤어케어',this)">헤어케어</div>
-        </div>
+</dialog>
 
-        <div class="product-container cart">
-          <div class="item">
-            <div class="img-cover">
-              <img
-                src="./asaset/A-Module/images/헤어케어/4.PNG"
-                alt="헤어케어3Img"
-                title="헤어케어3Img" />
-            </div>
-
-            <div class="item-content">
-              <div class="item-title">모로칸오일 헤어트리트먼트 100ml</div>
-              <div class="item-price"><span class="price">
-                  <span< /span> class="price">52,200
-                </span></div>
-            </div>
-          </div>
-        </div>
-        <div class="drop product-container"></div>
-      </main>
-      <footer>
-        <div class="checkout">
-          <div class="total">총: <span>0</span>원</div>
-          <div class="checoutBtn">구매하기</div>
-        </div>
-      </footer>
-    </div>
-  </div>
-
-  <!-- 드래그앤드롭 -->
-
-  <div class="open">비회원주문</div>
-  <!-- 드래그앤드롭 열기 -->
-  <footer>
-    <div class="howto">
-      고객센터 이용안내 - 온라인몰 고객센터 1580-8282 - 매장고객센터
-      1577-8254고객센터 운영시간 [평일 09:00 - 18:00]
-    </div>
-    <div class="time"></div>
-    <div class="support">
-      주말 및 공휴일은 1:1문의하기를 이용해주세요. 업무가 시작되면 바로
-      처리해드립니다.
-    </div>
-
-    <div class="footer-nav">
-      <a href="#"><img src="./images/logo.png" alt="footer-logo" title="footer-logo" /></a>
-      <div class="other">
-        <a href="#">개인정보처리방침</a> | <a href="#">이용약관.법적고지</a> |
-        <a href="#">청소년보호방침</a> | <a href="#">이메일무단수집거부</a> |
-        <a href="#">사이트맵</a> |
-        <a href="#">채용</a>
-      </div>
-      <div class="Sns">
-        <a href="#"><i class="fa fa-twitter"></i></a>
-        <a href="#"><i class="fa fa-youtube-play"></i></a>
-        <a href="#"><i class="fa fa-weixin"></i></a>
-        <a href="#"><i class="fa fa-linkedin-square"></i></a>
-        <a href="#"><i class="fa fa-facebook-square"></i></a>
-      </div>
-    </div>
-
-    <div class="who">
-      (주)GIFTS:Mall | 사업자등록번호 : 809-81-01157 | 대표이사 황기영 주소 :
-      서울특별시 용산구 한강대로 123, 40층 본사 대표전화 : 02-123-4567 |
-      GIFTS:Mall 가맹상담전화 : 02-123-4568
-    </div>
-    <div class="safe">
-      지방은행구매안전서비스 GIFTS:Mall은 현금 결제한 금액에 대해 지방은행과
-      채무지급보증 계약을체결하여 안전한 거래를 보장하고 있습니다 서비스
-      가입사실 확인 >
-    </div>
-    <div class="copy">
-      COPYRIGHTⓒ 2024 GIFTS:MALL KOREA INC. ALL RIGHTS RESERVED
-    </div>
-  </footer>
-  <script src="./js/lib.js"></script>
-  <script src="./js/sub02.js"></script>
+<?php require_once "parts/footer.php"; ?>
+<script>
+  // 비회원 주문용 상품 목록 (서버에서 전달)
+  const GUEST_ITEMS = <?= json_encode($guestData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  const CATES = <?= json_encode(CATES, JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<script src="./js/sub02.js"></script>
 </body>
 
 </html>
